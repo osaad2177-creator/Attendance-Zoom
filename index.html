@@ -48,26 +48,28 @@
 
       header {
         display: flex;
+        flex-direction: column;
         align-items: center;
-        gap: 1rem;
+        gap: 0.75rem;
+        text-align: center;
       }
 
       header h1 {
         margin: 0;
-        font-size: 1.5rem;
+        font-size: 1.65rem;
       }
 
       header img {
-        width: 96px;
-        height: 96px;
-        padding: 0.8rem;
-        border-radius: 28px;
+        width: 104px;
+        height: 104px;
+        padding: 0.9rem;
+        border-radius: 30px;
         object-fit: contain;
         flex-shrink: 0;
         background: #fff;
-        border: 2px solid #dbeafe;
+        border: 2px solid rgba(59, 130, 246, 0.2);
         box-shadow: inset 0 0 25px rgba(15, 23, 42, 0.08),
-          0 0 0 6px rgba(255, 255, 255, 0.8);
+          0 0 0 8px rgba(255, 255, 255, 0.9);
       }
 
       .field {
@@ -173,6 +175,30 @@
         color: #0369a1;
       }
 
+      .test-mode {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        padding: 0.75rem 1rem;
+        border-radius: 1rem;
+        background: rgba(59, 130, 246, 0.08);
+        border: 1px dashed rgba(37, 99, 235, 0.4);
+        font-size: 0.9rem;
+        color: var(--primary-dark);
+      }
+
+      .test-mode label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+      }
+
+      .test-mode small {
+        color: var(--muted);
+        font-weight: 500;
+      }
+
       .meta {
         font-size: 0.85rem;
         color: var(--muted);
@@ -213,7 +239,7 @@
         />
         <div>
           <h1>Attendance System</h1>
-          <p class="meta">
+          <p class="meta" style="justify-content: center">
             Fast, secure check-ins with live location validation.
           </p>
         </div>
@@ -240,6 +266,14 @@
             ❌ Check Out
           </button>
         </div>
+
+        <section id="testModePanel" class="test-mode">
+          <label>
+            <input type="checkbox" id="testModeToggle" />
+            Testing mode (use office coordinates)
+          </label>
+          <small>Leave unchecked in production. Enabled mode skips GPS and assumes you are inside the office radius.</small>
+        </section>
       </form>
 
       <div id="statusMessage" class="message message-info">
@@ -261,9 +295,10 @@
         "https://script.google.com/macros/s/AKfycbwIIfevUUoQYmRCyDruwp7xZS7iW_BgMvl6sF4VSzMbXdUzFxeSlDmrfOLqpt4qFenZDA/exec"; // Replace with your Google Apps Script Web App URL if different.
       const OFFICE_LAT = 30.108528; // Replace with office latitude.
       const OFFICE_LNG = 31.337788; // Replace with office longitude.
-      const ALLOWED_DISTANCE = 150; // Replace with allowed distance in meters.
+      const ALLOWED_DISTANCE = 100; // Replace with allowed distance in meters.
       const COMPANY_LOGO_URL =
         "https://osaad2177-creator.github.io/Attendance-Zoom/assets/logo.svg"; // Replace with direct company logo URL or hosted asset.
+      const ENABLE_TEST_MODE = true; // Set to false before production.
       const GEO_PRIMARY_OPTIONS = {
         enableHighAccuracy: true,
         timeout: 12000,
@@ -283,6 +318,12 @@
       const lastAction = document.getElementById("lastAction");
       const buttons = form.querySelectorAll("button[data-type]");
       const companyLogo = document.getElementById("companyLogo");
+      const testModePanel = document.getElementById("testModePanel");
+      const testModeToggle = document.getElementById("testModeToggle");
+
+      if (!ENABLE_TEST_MODE && testModePanel) {
+        testModePanel.style.display = "none";
+      }
 
       companyLogo.src = COMPANY_LOGO_URL;
       companyLogo.addEventListener("error", () => {
@@ -401,6 +442,9 @@
         }
       }
 
+      const isTestModeEnabled = () =>
+        ENABLE_TEST_MODE && testModeToggle && testModeToggle.checked;
+
       async function requestAttendance(attendanceType) {
         const employeeName = nameInput.value.trim();
         if (!employeeName) {
@@ -418,18 +462,35 @@
         setMessage("Fetching your location…", "info");
 
         try {
+          let latitude;
+          let longitude;
+          let distance;
+
+          if (isTestModeEnabled()) {
+            latitude = OFFICE_LAT;
+            longitude = OFFICE_LNG;
+            distance = 0;
+            setMessage(
+              "Testing mode is ON. Using office coordinates.",
+              "info"
+            );
+          } else {
           const position = await acquirePosition();
-          const { latitude, longitude } = position.coords;
-          const distance = haversineDistance(
-            latitude,
-            longitude,
-            OFFICE_LAT,
-            OFFICE_LNG
-          );
+            ({ latitude, longitude } = position.coords);
+            distance = haversineDistance(
+              latitude,
+              longitude,
+              OFFICE_LAT,
+              OFFICE_LNG
+            );
+          }
 
-          updateMeta({ action: `${attendanceType} pending`, distance });
+          updateMeta({
+            action: `${attendanceType} pending`,
+            distance,
+          });
 
-          if (distance > ALLOWED_DISTANCE) {
+          if (!isTestModeEnabled() && distance > ALLOWED_DISTANCE) {
             setMessage("You are outside the allowed location.", "error");
             return;
           }
@@ -446,7 +507,12 @@
           } else if (error.code === error.POSITION_UNAVAILABLE) {
             setMessage("Location information is unavailable.", "error");
           } else if (error.code === error.TIMEOUT) {
-            setMessage("Location request timed out. Try again.", "error");
+            setMessage(
+              ENABLE_TEST_MODE
+                ? "Location request timed out. Enable testing mode to simulate being in the office."
+                : "Location request timed out. Try again.",
+              "error"
+            );
           } else {
             setMessage("Unable to fetch location.", "error");
           }

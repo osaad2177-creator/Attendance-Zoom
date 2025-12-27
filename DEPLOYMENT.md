@@ -66,8 +66,9 @@ function doGet(e) {
 1. Open `index.html` and update the configuration block near the top of the script:
    - `APPS_SCRIPT_URL`: Paste the Web App URL from step 2.
    - `OFFICE_LAT` & `OFFICE_LNG`: Defaults are `30.108528, 31.337788` for testing—replace with your exact coordinates.
-   - `ALLOWED_DISTANCE`: Set the maximum radius (in meters).
+   - `ALLOWED_DISTANCE`: Defaults to `100` meters (perimeter for check in/out). Increase only if your GPS conditions require it.
    - `COMPANY_LOGO_URL`: Defaults to the absolute GitHub Pages URL for `assets/logo.svg`; replace with any HTTPS-accessible logo you prefer.
+   - `ENABLE_TEST_MODE`: Set to `true` for staging so you can toggle “Testing mode (use office coordinates)” without depending on GPS. Flip to `false` before production so real locations are enforced.
 2. Test locally by opening `index.html` in a browser.  
    Ensure:
    - Location permissions are granted.
@@ -112,6 +113,7 @@ function doGet(e) {
   - Double-check `OFFICE_LAT`/`OFFICE_LNG`, and ensure the user grants high-accuracy GPS permission on mobile.
 - **Location request timed out repeatedly**
   - The app now retries with a lower-accuracy, longer timeout after the first failure. If it still times out, verify the browser has permission to access location on HTTPS and that the device can see Wi-Fi/GPS signals.
+  - For demos, enable the “Testing mode” toggle to bypass GPS and use the office coordinates—just remember to disable it before launch.
 
 That’s it! The system is ready for production use across web and mobile browsers.
 
