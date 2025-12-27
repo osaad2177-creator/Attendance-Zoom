@@ -84,8 +84,8 @@
 
     <input id="name" type="text" placeholder="Employee Name" />
 
-    <button class="checkin" onclick="handleAttendance('Check In')">✅ Check In</button>
-    <button class="checkout" onclick="handleAttendance('Check Out')">❌ Check Out</button>
+    <button class="checkin" onclick="sendAttendance('Check In')">✅ Check In</button>
+    <button class="checkout" onclick="sendAttendance('Check Out')">❌ Check Out</button>
 
     <div id="msg" class="msg info"></div>
 
@@ -93,12 +93,9 @@
   </div>
 
 <script>
-  /* ================= CONFIG ================= */
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyNeWICu6QjixISJvqmCrjWgatbigewzKcCRXz4fSCL2X9RuibOaIAspLbmGy01LzZU-w/exec";
-  const OFFICE_LAT = 30.126749;
-  const OFFICE_LNG = 31.377182;
-  const MAX_DISTANCE = 10000000; // meters
-  /* ========================================== */
+  /* ============ CONFIG ============ */
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGtyyjXMNVfNB6Q7af8ER3QasfaEt0cUYI_rbGyVOgl4pmG-9apagkXillMAQ0jD37hw/exec";
+  /* ================================ */
 
   const msg = document.getElementById("msg");
   const nameInput = document.getElementById("name");
@@ -109,70 +106,23 @@
     msg.textContent = text;
   }
 
-  function toRad(x) {
-    return x * Math.PI / 180;
-  }
-
-  function distance(lat1, lon1, lat2, lon2) {
-    const R = 6371e3;
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-    const a =
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  }
-
-  function handleAttendance(type) {
+  function sendAttendance(type) {
     const name = nameInput.value.trim();
     if (!name) {
       showMsg("Please enter your name", "error");
       return;
     }
 
-    if (!navigator.geolocation) {
-      showMsg("Geolocation not supported", "error");
-      return;
-    }
-
-    if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-      showMsg("📍 Allow location access & enable Precise Location", "info");
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      position => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-
-        const d = distance(lat, lng, OFFICE_LAT, OFFICE_LNG);
-        if (d > MAX_DISTANCE) {
-          showMsg("❌ You are outside the allowed location", "error");
-          return;
-        }
-
-        sendData(name, type, lat, lng);
-      },
-      err => {
-        showMsg("Location permission denied or unavailable", "error");
-      },
-      {
-        enableHighAccuracy: false,
-        timeout: 20000,
-        maximumAge: 0
-      }
-    );
-  }
-
-  function sendData(name, type, lat, lng) {
     showMsg("⏳ Recording attendance...", "info");
 
-    const url = `${SCRIPT_URL}?employee_name=${encodeURIComponent(name)}&attendance_type=${encodeURIComponent(type)}&latitude=${lat}&longitude=${lng}`;
+    const url =
+      `${SCRIPT_URL}?employee_name=${encodeURIComponent(name)}` +
+      `&attendance_type=${encodeURIComponent(type)}`;
 
     fetch(url)
       .then(res => res.text())
       .then(text => {
-        if (text.includes("success")) {
+        if (text.toLowerCase().includes("success")) {
           showMsg("✅ Attendance recorded successfully", "success");
         } else {
           showMsg(text || "Server error", "error");
@@ -186,5 +136,6 @@
 
 </body>
 </html>
+
 
 
