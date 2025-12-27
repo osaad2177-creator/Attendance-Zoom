@@ -1,0 +1,100 @@
+# Deployment Guide
+
+Follow the steps below to deploy the attendance system with a Google Apps Script backend and a GitHub Pages frontend.
+
+---
+
+## 1. Prepare the Google Sheet
+
+1. Create a new Google Sheet named `Attendance`.
+2. Rename the first worksheet (tab) to `Logs` (or any name you prefer, but keep it consistent with the script).
+3. In row 1, add the following headers in **exact order**:
+   - `Employee Name`
+   - `Type`
+   - `Date & Time`
+   - `Latitude`
+   - `Longitude`
+4. Note the spreadsheet ID from its URL (`https://docs.google.com/spreadsheets/d/<SPREADSHEET_ID>/edit`).
+
+---
+
+## 2. Create the Google Apps Script backend
+
+1. In the Google Sheet, open **Extensions → Apps Script**.
+2. Replace the default code with the script below and update `SPREADSHEET_ID` and `SHEET_NAME`:
+
+```javascript
+const SPREADSHEET_ID = 'PUT_SPREADSHEET_ID_HERE';
+const SHEET_NAME = 'Logs'; // Must match the worksheet created earlier.
+
+function doGet(e) {
+  if (!e || !e.parameter) {
+    return ContentService.createTextOutput('Missing required data').setMimeType(ContentService.MimeType.TEXT);
+  }
+
+  const employeeName = (e.parameter.employee_name || '').trim();
+  const attendanceType = (e.parameter.attendance_type || '').trim();
+  const latitude = (e.parameter.latitude || '').trim();
+  const longitude = (e.parameter.longitude || '').trim();
+
+  if (!employeeName || !attendanceType || !latitude || !longitude) {
+    return ContentService.createTextOutput('Missing required data').setMimeType(ContentService.MimeType.TEXT);
+  }
+
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
+  if (!sheet) {
+    return ContentService.createTextOutput('Sheet not found').setMimeType(ContentService.MimeType.TEXT);
+  }
+
+  sheet.appendRow([employeeName, attendanceType, new Date(), latitude, longitude]);
+
+  return ContentService.createTextOutput('Attendance recorded successfully').setMimeType(ContentService.MimeType.TEXT);
+}
+```
+
+3. Save the script and set a clear project name (e.g., `Attendance Backend`).
+
+4. Click **Deploy → Test deployments → Select type: Web app → Deploy**.
+5. Set the deployment access to **Anyone**.
+6. Copy the Web App URL (it will look similar to `https://script.google.com/macros/s/.../exec`).  
+   This URL goes into the `APPS_SCRIPT_URL` constant in `index.html`.
+
+---
+
+## 3. Configure the frontend
+
+1. Open `index.html` and update the configuration block near the top of the script:
+   - `APPS_SCRIPT_URL`: Paste the Web App URL from step 2.
+   - `OFFICE_LAT` & `OFFICE_LNG`: Enter your office coordinates.
+   - `ALLOWED_DISTANCE`: Set the maximum radius (in meters).
+   - `COMPANY_LOGO_URL`: Set a direct URL to your company logo image.
+2. Test locally by opening `index.html` in a browser.  
+   Ensure:
+   - Location permissions are granted.
+   - The success and error messages display correctly.
+   - Rows appear in the Google Sheet after check-in/out.
+
+---
+
+## 4. Deploy to GitHub Pages
+
+1. Commit and push `index.html` (and any supporting files) to the `main` branch of the `Attendance-Zoom` repository.
+2. In GitHub, navigate to **Settings → Pages**.
+3. Under **Build and deployment**, choose:
+   - Source: `Deploy from a branch`
+   - Branch: `main`, folder `/ (root)`
+4. Save the configuration. Within a few minutes, GitHub Pages will provide your live URL.
+5. Share the URL with employees. The app will communicate with the Apps Script backend in real time.
+
+---
+
+## 5. Ongoing maintenance tips
+
+- Monitor the Google Sheet for capacity (it can handle tens of thousands of rows).
+- Protect the sheet or move data periodically if needed.
+- Re-deploy the Apps Script whenever you edit the backend code.
+- Consider creating filters or pivot tables in the sheet for quick analytics.
+- Regularly verify that geolocation permissions and HTTPS are functioning in modern browsers (Chrome, Edge, Safari, Firefox).
+
+That’s it! The system is ready for production use across web and mobile browsers.*** End Patch
+
