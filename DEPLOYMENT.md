@@ -66,7 +66,7 @@ function doGet(e) {
 1. Open `index.html` and update the configuration block near the top of the script:
    - `APPS_SCRIPT_URL`: Paste the Web App URL from step 2.
    - `OFFICE_LAT` & `OFFICE_LNG`: Defaults are `30.108528, 31.337788` for testing—replace with your exact coordinates.
-   - `ALLOWED_DISTANCE`: Defaults to `100` meters (perimeter for check in/out). Increase only if your GPS conditions require it.
+   - `ALLOWED_DISTANCE`: Defaults to `1000` meters (perimeter for check in/out). Adjust to your actual policy.
    - `COMPANY_LOGO_URL`: Defaults to the absolute GitHub Pages URL for `assets/logo.svg`; replace with any HTTPS-accessible logo you prefer.
 2. Test locally by opening `index.html` in a browser.  
    Ensure:
