@@ -175,30 +175,6 @@
         color: #0369a1;
       }
 
-      .test-mode {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-        padding: 0.75rem 1rem;
-        border-radius: 1rem;
-        background: rgba(59, 130, 246, 0.08);
-        border: 1px dashed rgba(37, 99, 235, 0.4);
-        font-size: 0.9rem;
-        color: var(--primary-dark);
-      }
-
-      .test-mode label {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-weight: 600;
-      }
-
-      .test-mode small {
-        color: var(--muted);
-        font-weight: 500;
-      }
-
       .meta {
         font-size: 0.85rem;
         color: var(--muted);
@@ -266,14 +242,6 @@
             ❌ Check Out
           </button>
         </div>
-
-        <section id="testModePanel" class="test-mode">
-          <label>
-            <input type="checkbox" id="testModeToggle" />
-            Testing mode (use office coordinates)
-          </label>
-          <small>Leave unchecked in production. Enabled mode skips GPS and assumes you are inside the office radius.</small>
-        </section>
       </form>
 
       <div id="statusMessage" class="message message-info">
@@ -298,7 +266,6 @@
       const ALLOWED_DISTANCE = 100; // Replace with allowed distance in meters.
       const COMPANY_LOGO_URL =
         "https://osaad2177-creator.github.io/Attendance-Zoom/assets/logo.svg"; // Replace with direct company logo URL or hosted asset.
-      const ENABLE_TEST_MODE = true; // Set to false before production.
       const GEO_PRIMARY_OPTIONS = {
         enableHighAccuracy: true,
         timeout: 12000,
@@ -318,12 +285,6 @@
       const lastAction = document.getElementById("lastAction");
       const buttons = form.querySelectorAll("button[data-type]");
       const companyLogo = document.getElementById("companyLogo");
-      const testModePanel = document.getElementById("testModePanel");
-      const testModeToggle = document.getElementById("testModeToggle");
-
-      if (!ENABLE_TEST_MODE && testModePanel) {
-        testModePanel.style.display = "none";
-      }
 
       companyLogo.src = COMPANY_LOGO_URL;
       companyLogo.addEventListener("error", () => {
@@ -442,9 +403,6 @@
         }
       }
 
-      const isTestModeEnabled = () =>
-        ENABLE_TEST_MODE && testModeToggle && testModeToggle.checked;
-
       async function requestAttendance(attendanceType) {
         const employeeName = nameInput.value.trim();
         if (!employeeName) {
@@ -462,35 +420,21 @@
         setMessage("Fetching your location…", "info");
 
         try {
-          let latitude;
-          let longitude;
-          let distance;
-
-          if (isTestModeEnabled()) {
-            latitude = OFFICE_LAT;
-            longitude = OFFICE_LNG;
-            distance = 0;
-            setMessage(
-              "Testing mode is ON. Using office coordinates.",
-              "info"
-            );
-          } else {
           const position = await acquirePosition();
-            ({ latitude, longitude } = position.coords);
-            distance = haversineDistance(
-              latitude,
-              longitude,
-              OFFICE_LAT,
-              OFFICE_LNG
-            );
-          }
+          const { latitude, longitude } = position.coords;
+          const distance = haversineDistance(
+            latitude,
+            longitude,
+            OFFICE_LAT,
+            OFFICE_LNG
+          );
 
           updateMeta({
             action: `${attendanceType} pending`,
             distance,
           });
 
-          if (!isTestModeEnabled() && distance > ALLOWED_DISTANCE) {
+          if (distance > ALLOWED_DISTANCE) {
             setMessage("You are outside the allowed location.", "error");
             return;
           }
@@ -507,12 +451,7 @@
           } else if (error.code === error.POSITION_UNAVAILABLE) {
             setMessage("Location information is unavailable.", "error");
           } else if (error.code === error.TIMEOUT) {
-            setMessage(
-              ENABLE_TEST_MODE
-                ? "Location request timed out. Enable testing mode to simulate being in the office."
-                : "Location request timed out. Try again.",
-              "error"
-            );
+            setMessage("Location request timed out. Try again.", "error");
           } else {
             setMessage("Unable to fetch location.", "error");
           }
