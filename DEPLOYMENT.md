@@ -68,6 +68,7 @@ function doGet(e) {
    - `OFFICE_LAT` & `OFFICE_LNG`: Defaults are `30.108528, 31.337788` for testing—replace with your exact coordinates.
    - `ALLOWED_DISTANCE`: Defaults to `1000` meters (perimeter for check in/out). Adjust to your actual policy.
    - `COMPANY_LOGO_URL`: Defaults to the absolute GitHub Pages URL for `assets/logo.svg`; replace with any HTTPS-accessible logo you prefer.
+   - `LOCATION_CHECK_ENABLED`: Set to `false` to bypass GPS and always send office coordinates while you test connectivity; set to `true` for production geofencing.
 2. Test locally by opening `index.html` in a browser.  
    Ensure:
    - Location permissions are granted.
