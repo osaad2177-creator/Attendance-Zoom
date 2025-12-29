@@ -1,108 +1,37 @@
-<script>
-  const APPS_SCRIPT_URL =
-    "https://script.google.com/macros/s/AKfycbxk8P90K4Qdrw3ZAACPFiULo7tybd1kfBswoPoVC6JPJJ3iFDZnabsoRZOFQMN9s3vzhg/exec";
+async function sendAttendance({ employeeName, attendanceType, latitude, longitude }) {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), 12000);
 
-  const COMPANY_LOGO_URL =
-    "https://osaad2177-creator.github.io/Attendance-Zoom/assets/logo.svg";
+  try {
+    const mapsLink = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
 
-  const GEO_OPTIONS = {
-    enableHighAccuracy: true,
-    timeout: 20000,
-    maximumAge: 30000,
-  };
-
-  const form = document.getElementById("attendanceForm");
-  const nameInput = document.getElementById("employeeName");
-  const statusMessage = document.getElementById("statusMessage");
-  const lastAction = document.getElementById("lastAction");
-  const distanceInfo = document.getElementById("distanceInfo");
-  const buttons = form.querySelectorAll("button[data-type]");
-  const companyLogo = document.getElementById("companyLogo");
-
-  companyLogo.src = COMPANY_LOGO_URL;
-
-  function setMessage(content, type = "info") {
-    statusMessage.className = `message message-${type}`;
-    statusMessage.style.display = "flex";
-    statusMessage.innerHTML = `<span>${
-      type === "success" ? "✅" : type === "error" ? "❌" : "ℹ️"
-    }</span><p>${content}</p>`;
-  }
-
-  function toggleLoading(isLoading, label) {
-    buttons.forEach((button) => {
-      if (isLoading && button.dataset.type === label) {
-        button.dataset.originalText = button.innerHTML;
-        button.innerHTML = "⏳ Recording...";
-      } else if (!isLoading && button.dataset.type === label) {
-        button.innerHTML = button.dataset.originalText || button.innerHTML;
-      }
-      button.disabled = isLoading;
-    });
-  }
-
-  function getPosition() {
-    return new Promise((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(resolve, reject, GEO_OPTIONS);
-    });
-  }
-
-  async function sendAttendance({ employeeName, attendanceType, locationLink }) {
     const url = new URL(APPS_SCRIPT_URL);
     url.searchParams.set("employee_name", employeeName);
     url.searchParams.set("attendance_type", attendanceType);
-    url.searchParams.set("location_link", locationLink);
+    url.searchParams.set("location_link", mapsLink); // الرابط بدل lat/lng
 
-    const res = await fetch(url.toString(), { cache: "no-store" });
-    const text = (await res.text()).trim();
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      cache: "no-store",
+      signal: controller.signal,
+    });
 
-    if (res.ok && text.includes("Attendance recorded successfully")) {
+    const text = (await response.text()).trim();
+
+    if (response.ok && text.includes("Attendance recorded successfully")) {
       setMessage("Attendance recorded successfully.", "success");
-      lastAction.firstElementChild.textContent = `Last update: ${attendanceType} just now`;
-      distanceInfo.textContent = "Location recorded ✔️";
+    } else if (text.includes("Missing required data")) {
+      setMessage("Missing required data.", "error");
     } else {
-      setMessage(text || "Unexpected server response.", "error");
+      setMessage(text || "Unexpected response from server.", "error");
     }
+  } catch (error) {
+    if (error.name === "AbortError") {
+      setMessage("Request timed out. Please try again.", "error");
+    } else {
+      setMessage("Network error. Please retry.", "error");
+    }
+  } finally {
+    window.clearTimeout(timeoutId);
   }
-
-  async function requestAttendance(attendanceType) {
-    const employeeName = nameInput.value.trim();
-    if (!employeeName) {
-      setMessage("Please enter your name.", "error");
-      return;
-    }
-
-    if (!navigator.geolocation) {
-      setMessage("Geolocation is not supported.", "error");
-      return;
-    }
-
-    toggleLoading(true, attendanceType);
-    setMessage("Fetching your location…", "info");
-
-    try {
-      const position = await getPosition();
-      const { latitude, longitude } = position.coords;
-
-      const locationLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
-
-      await sendAttendance({
-        employeeName,
-        attendanceType,
-        locationLink,
-      });
-    } catch (e) {
-      setMessage("Unable to fetch location. Please allow location access.", "error");
-    } finally {
-      toggleLoading(false, attendanceType);
-    }
-  }
-
-  buttons.forEach((btn) =>
-    btn.addEventListener("click", () =>
-      requestAttendance(btn.dataset.type)
-    )
-  );
-
-  form.addEventListener("submit", (e) => e.preventDefault());
-</script>
+}
