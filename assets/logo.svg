@@ -1,11 +1,13 @@
 <svg width="500" height="600" viewBox="0 0 500 600" xmlns="http://www.w3.org/2000/svg">
   <rect width="500" height="600" fill="#062A63"/>
 
-  <!-- Z Shape -->
+  <!-- Z Shape Top -->
   <polygon points="120,80 250,80 120,210" fill="#ffffff"/>
   <polygon points="250,80 380,80 250,210" fill="#ffffff"/>
-  <polygon points="120,210 250,340 120,340" fill="#ffffff"/>
-  <polygon points="250,210 380,340 250,340" fill="#ffffff"/>
+
+  <!-- Bottom triangles rotated 270° -->
+  <polygon points="120,210 250,340 120,340" fill="#ffffff" transform="rotate(270 185 275)"/>
+  <polygon points="250,210 380,340 250,340" fill="#ffffff" transform="rotate(270 315 275)"/>
 
   <!-- Text -->
   <text x="250" y="430" text-anchor="middle"
