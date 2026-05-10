@@ -263,7 +263,7 @@
         "https://script.google.com/macros/s/AKfycbw8pwsSsY13LBPLLwyrc5qwlxdGHsZv-3owjG9u00dVzhUtpR56D9WyqERWVZUtTffqpQ/exec"; // Replace with your Google Apps Script Web App URL if different.
       const OFFICE_LAT = 30.02734678890863; // Replace with office latitude.
       const OFFICE_LNG = 31.232201070214547; // Replace with office longitude.
-      const ALLOWED_DISTANCE = 500; // Replace with allowed distance in meters.
+      const ALLOWED_DISTANCE = 100; // Replace with allowed distance in meters.
       const COMPANY_LOGO_URL =
         "https://osaad2177-creator.github.io/Attendance-Zoom/assets/logo.svg"; // Replace with direct company logo URL or hosted asset.
       const LOCATION_CHECK_ENABLED = true; // Set to true for production geofence; false to bypass location while testing backend.
@@ -274,8 +274,8 @@
       };
       const GEO_FALLBACK_OPTIONS = {
         enableHighAccuracy: false,
-        timeout: 25000,
-        maximumAge: 60000,
+        timeout: 30,
+        maximumAge: 60,
       };
       // ⬆⬆⬆ Configuration placeholders (update before deploying) ⬆⬆⬆
 
