@@ -269,8 +269,8 @@
       const LOCATION_CHECK_ENABLED = true; // Set to true for production geofence; false to bypass location while testing backend.
       const GEO_PRIMARY_OPTIONS = {
         enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 30000,
+        timeout: 150,
+        maximumAge: 300,
       };
       const GEO_FALLBACK_OPTIONS = {
         enableHighAccuracy: false,
